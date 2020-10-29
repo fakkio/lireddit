@@ -1,9 +1,9 @@
 import argon2 from "argon2";
-import {Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver} from "type-graphql";
+import {Arg, Ctx, Field, FieldResolver, Mutation, ObjectType, Query, Resolver, Root} from "type-graphql";
 import {v4} from "uuid";
 import {COOKIE_NAME, FORGET_PASSWORD_PREFIX} from "../constants";
 import {User} from "../entities/User";
-import {Context} from "../types";
+import {ResolverContext} from "../types";
 import {sendEmail} from "../utils/sendEmail";
 import {validateRegister} from "../utils/validate";
 import {UsernamePasswordInput} from "./UsernamePasswordInput";
@@ -27,13 +27,21 @@ class UserResponse {
   user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() {req}: ResolverContext) {
+    if (req.session.userId === user.id) {
+      return user.email;
+    }
+    return "";
+  }
+
   @Mutation(() => UserResponse)
   async changePassword(
     @Arg("token") token: string,
     @Arg("newPassword") newPassword: string,
-    @Ctx() {req, redis}: Context
+    @Ctx() {req, redis}: ResolverContext
   ): Promise<UserResponse> {
     if (newPassword.length < 6) {
       return {
@@ -82,7 +90,7 @@ export class UserResolver {
   @Mutation(() => Boolean)
   async forgotPassword(
     @Arg("email") email: string,
-    @Ctx() {redis}: Context
+    @Ctx() {redis}: ResolverContext
   ): Promise<boolean> {
     const user = await User.findOne({where: {email}});
     if (!user) {
@@ -105,7 +113,7 @@ export class UserResolver {
   }
 
   @Query(() => User, {nullable: true})
-  async me(@Ctx() {req}: Context): Promise<User | undefined> {
+  async me(@Ctx() {req}: ResolverContext): Promise<User | undefined> {
     if (!req.session.userId) {
       return undefined;
     }
@@ -115,7 +123,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() {req}: Context
+    @Ctx() {req}: ResolverContext
   ): Promise<UserResponse> {
     const errors = validateRegister(options);
     if (errors) {
@@ -123,15 +131,14 @@ export class UserResolver {
     }
 
     const hashedPassword = await argon2.hash(options.password);
-    const createUser = User.create({
-      username: options.username,
-      password: hashedPassword,
-      email: options.email,
-    });
 
     let user: User;
     try {
-      user = await createUser.save();
+      user = await User.create({
+        username: options.username,
+        password: hashedPassword,
+        email: options.email,
+      }).save();
     } catch (error) {
       if (error.code === "23505") {
         return {
@@ -164,7 +171,7 @@ export class UserResolver {
   async login(
     @Arg("usernameOrEmail") usernameOrEmail: string,
     @Arg("password") password: string,
-    @Ctx() {req}: Context
+    @Ctx() {req}: ResolverContext
   ): Promise<UserResponse> {
     const user = await User.findOne({
       where: usernameOrEmail.includes("@")
@@ -200,7 +207,7 @@ export class UserResolver {
   }
 
   @Mutation(() => Boolean)
-  logout(@Ctx() {req, res}: Context) {
+  logout(@Ctx() {req, res}: ResolverContext) {
     return new Promise((resolve) => {
       req.session.destroy((err) => {
         res.clearCookie(COOKIE_NAME);

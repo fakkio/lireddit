@@ -4,29 +4,34 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
+import path from "path";
 import "reflect-metadata";
 import {buildSchema} from "type-graphql";
 import {createConnection} from "typeorm";
 import {COOKIE_NAME} from "./constants";
 import {Post} from "./entities/Post";
+import {Updoot} from "./entities/Updoot";
 import {User} from "./entities/User";
 import {HelloResolver} from "./resolvers/hello";
 import {PostResolver} from "./resolvers/post";
 import {UserResolver} from "./resolvers/user";
-import {Context} from "./types";
+import {ResolverContext} from "./types";
 
 const TEN_YEARS_IN_MILLS = 1000 * 60 * 60 * 24 * 365 * 10;
 
 const main = async () => {
-  const connection = createConnection({
+  // const connection = await createConnection({
+  const conn = await createConnection({
     username: "postgres",
     password: "postgres",
     type: "postgres",
     database: "lireddit",
     logging: true,
     synchronize: true,
-    entities: [Post, User],
+    migrations: [path.join(__dirname, "./migrations/*")],
+    entities: [Post, User, Updoot],
   });
+  await conn.runMigrations();
 
   const app = express();
 
@@ -64,7 +69,8 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({req, res}): Context => ({req, res, redis} as Context),
+    context: ({req, res}): ResolverContext =>
+      ({req, res, redis} as ResolverContext),
   });
   apolloServer.applyMiddleware({
     app,
