@@ -12,18 +12,29 @@ type FieldError {
 
 type Mutation {
   changePassword(newPassword: String!, token: String!): UserResponse!
-  createPost(title: String!): Post!
+  createPost(values: PostInput!): Post!
   deletePost(id: Float!): Boolean!
   forgotPassword(email: String!): Boolean!
   login(password: String!, usernameOrEmail: String!): UserResponse!
   logout: Boolean!
   register(options: UsernamePasswordInput!): UserResponse!
   updatePost(id: Float!, title: String): Post
+  vote(postId: Int!, value: Int!): Boolean!
+}
+
+type PaginatedPosts {
+  hasMore: Boolean!
+  posts: [Post!]!
 }
 
 type Post {
   createdAt: String!
+  creator: User!
+  creatorId: Float!
   id: Float!
+  points: Float!
+  text: String!
+  textSnippet: String!
   title: String!
   updatedAt: String!
 }
@@ -32,7 +43,7 @@ type Query {
   hello: String!
   me: User
   post(id: Float!): Post
-  posts: [Post!]!
+  posts(cursor: String, limit: Int!): PaginatedPosts!
 }
 
 type User {
@@ -46,6 +57,11 @@ type User {
 type UserResponse {
   errors: [FieldError!]
   user: User
+}
+
+input PostInput {
+  text: String!
+  title: String!
 }
 
 input UsernamePasswordInput {

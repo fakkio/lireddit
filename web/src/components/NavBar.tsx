@@ -40,7 +40,14 @@ export const NavBar = ({}: NavBarProps) => {
   }
 
   return (
-    <Flex bg="#34495e" p={4} color="#ecf0f1">
+    <Flex
+      bg="#34495e"
+      p={4}
+      color="#ecf0f1"
+      position="sticky"
+      top={0}
+      zIndex={10}
+    >
       <NextLink href="/">
         <Link>Home</Link>
       </NextLink>
