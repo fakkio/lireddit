@@ -1,6 +1,7 @@
 import {ApolloServer} from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
+import "dotenv-safe/config";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
@@ -8,7 +9,7 @@ import path from "path";
 import "reflect-metadata";
 import {buildSchema} from "type-graphql";
 import {createConnection} from "typeorm";
-import {COOKIE_NAME} from "./constants";
+import {__PROD__, COOKIE_NAME} from "./constants";
 import {Post} from "./entities/Post";
 import {Updoot} from "./entities/Updoot";
 import {User} from "./entities/User";
@@ -16,18 +17,18 @@ import {HelloResolver} from "./resolvers/hello";
 import {PostResolver} from "./resolvers/post";
 import {UserResolver} from "./resolvers/user";
 import {ResolverContext} from "./types";
+import {createUpdootLoader} from "./utils/createUpdootLoader";
+import {createUserLoader} from "./utils/createUserLoader";
 
 const TEN_YEARS_IN_MILLS = 1000 * 60 * 60 * 24 * 365 * 10;
 
 const main = async () => {
   // const connection = await createConnection({
   const conn = await createConnection({
-    username: "postgres",
-    password: "postgres",
     type: "postgres",
-    database: "lireddit",
+    url: process.env.DATABASE_URL,
     logging: true,
-    synchronize: true,
+    // synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot],
   });
@@ -36,11 +37,13 @@ const main = async () => {
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redis = new Redis();
+  const redis = new Redis(process.env.REDIS_URL);
+
+  app.set("trust proxy", 1);
 
   app.use(
     cors({
-      origin: "http://localhost:3000",
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -55,11 +58,12 @@ const main = async () => {
       cookie: {
         maxAge: TEN_YEARS_IN_MILLS,
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: __PROD__,
         sameSite: "lax",
+        domain: __PROD__ ? ".lazzaroni.io" : undefined,
       },
       saveUninitialized: false,
-      secret: "iLrU6ocNYICbw3z7G0kGma2wEj3IGxS7rEbtOfqgGlURbpEM95REjWpu90HaMg4",
+      secret: process.env.SESSION_SECRET,
       resave: false,
     })
   );
@@ -70,15 +74,21 @@ const main = async () => {
       validate: false,
     }),
     context: ({req, res}): ResolverContext =>
-      ({req, res, redis} as ResolverContext),
+      ({
+        req,
+        res,
+        redis,
+        userLoader: createUserLoader(),
+        updootLoader: createUpdootLoader(),
+      } as ResolverContext),
   });
   apolloServer.applyMiddleware({
     app,
     cors: false,
   });
 
-  app.listen(4000, () => {
-    console.log("Server started on localhost:4000");
+  app.listen(parseInt(process.env.PORT, 10), () => {
+    console.log("Server started on localhost:" + process.env.PORT);
   });
 };
 

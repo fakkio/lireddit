@@ -1,5 +1,6 @@
-import {Box, Button, Flex, Link} from "@chakra-ui/core";
+import {Box, Button, Flex, Link, Text} from "@chakra-ui/core";
 import NextLink from "next/link";
+import {useRouter} from "next/router";
 import React from "react";
 import {useLogoutMutation, useMeQuery} from "../generated/graphql";
 import {isServer} from "../utils/isServer";
@@ -7,6 +8,7 @@ import {isServer} from "../utils/isServer";
 interface NavBarProps {}
 
 export const NavBar = ({}: NavBarProps) => {
+  const router = useRouter();
   const [{data, fetching}] = useMeQuery({pause: isServer()});
   const [{fetching: logoutFetching}, logout] = useLogoutMutation();
 
@@ -27,10 +29,16 @@ export const NavBar = ({}: NavBarProps) => {
     body = (
       <Flex ml="auto">
         <Box>Ciao {data?.me.username}!</Box>
+        <NextLink href="/create-post">
+          <Link ml={2}>Crea nuovo post</Link>
+        </NextLink>
         <Button
           ml={2}
           variant="link"
-          onClick={() => logout()}
+          onClick={async () => {
+            await logout();
+            router.reload();
+          }}
           isLoading={logoutFetching}
         >
           Logout
@@ -47,9 +55,12 @@ export const NavBar = ({}: NavBarProps) => {
       position="sticky"
       top={0}
       zIndex={10}
+      alignItems="center"
     >
       <NextLink href="/">
-        <Link>Home</Link>
+        <Link>
+          <Text fontSize="xl">LiReddit</Text>
+        </Link>
       </NextLink>
       {body}
     </Flex>

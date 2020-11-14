@@ -13,12 +13,12 @@ type FieldError {
 type Mutation {
   changePassword(newPassword: String!, token: String!): UserResponse!
   createPost(values: PostInput!): Post!
-  deletePost(id: Float!): Boolean!
+  deletePost(id: Int!): Boolean!
   forgotPassword(email: String!): Boolean!
   login(password: String!, usernameOrEmail: String!): UserResponse!
   logout: Boolean!
   register(options: UsernamePasswordInput!): UserResponse!
-  updatePost(id: Float!, title: String): Post
+  updatePost(id: Int!, text: String!, title: String!): Post
   vote(postId: Int!, value: Int!): Boolean!
 }
 
@@ -37,12 +37,13 @@ type Post {
   textSnippet: String!
   title: String!
   updatedAt: String!
+  votedStatus: Int
 }
 
 type Query {
   hello: String!
   me: User
-  post(id: Float!): Post
+  post(id: Int!): Post
   posts(cursor: String, limit: Int!): PaginatedPosts!
 }
 

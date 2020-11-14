@@ -17,6 +17,8 @@ export const UpdootSection = ({post}: UpdootSectionProps) => {
         aria-label="Mi piace"
         title="Mi piace"
         isLoading={fetching && clicked === "up"}
+        isDisabled={post.votedStatus === 1}
+        variantColor={post.votedStatus === 1 ? "green" : undefined}
         onClick={async () => {
           setClicked("up");
           await vote({value: 1, postId: post.id});
@@ -28,6 +30,8 @@ export const UpdootSection = ({post}: UpdootSectionProps) => {
         aria-label="Non mi piace"
         title="Non mi piace"
         isLoading={fetching && clicked === "down"}
+        isDisabled={post.votedStatus === -1}
+        variantColor={post.votedStatus === -1 ? "red" : undefined}
         onClick={async () => {
           setClicked("down");
           await vote({value: -1, postId: post.id});
