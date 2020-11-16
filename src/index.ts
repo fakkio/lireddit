@@ -24,15 +24,15 @@ const TEN_YEARS_IN_MILLS = 1000 * 60 * 60 * 24 * 365 * 10;
 
 const main = async () => {
   // const connection = await createConnection({
-  const conn = await createConnection({
+  await createConnection({
     type: "postgres",
     url: process.env.DATABASE_URL,
     logging: true,
-    // synchronize: true,
+    synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot],
   });
-  await conn.runMigrations();
+  // await connection.runMigrations();
 
   const app = express();
 
