@@ -12,8 +12,8 @@ export const EditDeletePostButtons = ({
   creatorId,
   id,
 }: EditDeletePostButtonsProps) => {
-  const [, deletePost] = useDeletePostMutation();
-  const [{data: me}] = useMeQuery();
+  const [deletePost] = useDeletePostMutation();
+  const {data: me} = useMeQuery();
 
   if (creatorId !== me?.me?.id) {
     return null;
@@ -29,7 +29,12 @@ export const EditDeletePostButtons = ({
         aria-label="Elimina post"
         icon="delete"
         onClick={async () => {
-          await deletePost({id});
+          await deletePost({
+            variables: {id},
+            update: (cache) => {
+              cache.evict({id: `Post:${id}`});
+            },
+          });
         }}
       />
     </Box>

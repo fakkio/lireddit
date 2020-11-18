@@ -1,19 +1,18 @@
 import {Box, Button, Icon, Link} from "@chakra-ui/core";
 import {Form, Formik} from "formik";
-import {withUrqlClient} from "next-urql";
 import NextLink from "next/link";
 import {useRouter} from "next/router";
 import React, {useState} from "react";
 import {InputField} from "../../components/InputField";
 import {NavBar} from "../../components/NavBar";
 import {Wrapper} from "../../components/Wrapper";
-import {useChangePasswordMutation} from "../../generated/graphql";
-import {createUrqlClient} from "../../utils/createUrqlClient";
+import {MeDocument, MeQuery, useChangePasswordMutation} from "../../generated/graphql";
 import {toErrorMap} from "../../utils/toErrorMap";
+import {withApollo} from "../../utils/withApollo";
 
 const ChangePassword = () => {
   const router = useRouter();
-  const [, changePassword] = useChangePasswordMutation();
+  const [changePassword] = useChangePasswordMutation();
   const [tokenError, setTokenError] = useState("");
 
   return (
@@ -24,11 +23,19 @@ const ChangePassword = () => {
           initialValues={{newPassword: ""}}
           onSubmit={async (values, {setErrors}) => {
             const response = await changePassword({
-              token:
-                typeof router.query.token === "string"
-                  ? router.query.token
-                  : "",
-              newPassword: values.newPassword,
+              variables: {
+                token:
+                  typeof router.query.token === "string"
+                    ? router.query.token
+                    : "",
+                newPassword: values.newPassword,
+              },
+              update: (cache, {data}) => {
+                cache.writeQuery<MeQuery>({
+                  query: MeDocument,
+                  data: {__typename: "Query", me: data?.changePassword.user},
+                });
+              },
             });
             if (response.data?.changePassword.errors) {
               const errorMap = toErrorMap(response.data.changePassword.errors);
@@ -75,4 +82,4 @@ const ChangePassword = () => {
   );
 };
 
-export default withUrqlClient(createUrqlClient)(ChangePassword);
+export default withApollo()(ChangePassword);
