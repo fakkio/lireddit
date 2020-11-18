@@ -1,10 +1,11 @@
 import DataLoader from "dataloader";
 import {Request, Response} from "express";
+import session from "express-session";
 import {Redis} from "ioredis";
 import {Updoot} from "./entities/Updoot";
 import {User} from "./entities/User";
 
-interface Session extends Express.Session {
+interface Session extends session.Session {
   userId?: number;
 }
 
