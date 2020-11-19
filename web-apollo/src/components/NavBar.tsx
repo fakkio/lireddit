@@ -12,8 +12,6 @@ export const NavBar = ({}: NavBarProps) => {
   const [logout, {loading: logoutFetching}] = useLogoutMutation();
   const apollo = useApolloClient();
 
-  console.log("data", data);
-
   let body = null;
   if (loading) {
   } else if (!data?.me) {
