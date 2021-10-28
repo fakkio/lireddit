@@ -1,7 +1,7 @@
 import {ApolloServer} from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
-import "dotenv-safe/config";
+import "dotenv/config";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
@@ -43,7 +43,7 @@ const main = async () => {
 
   app.use(
     cors({
-      origin: process.env.CORS_ORIGIN,
+      origin: process.env.LIREDDIT_CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -63,7 +63,7 @@ const main = async () => {
         domain: __PROD__ ? ".lazzaroni.io" : undefined,
       },
       saveUninitialized: false,
-      secret: process.env.SESSION_SECRET,
+      secret: process.env.LIREDDIT_SESSION_SECRET,
       resave: false,
     })
   );
