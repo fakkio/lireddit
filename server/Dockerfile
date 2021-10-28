@@ -12,7 +12,8 @@ COPY yarn.lock ./
 RUN yarn
 
 COPY . .
-COPY .env.production .env
+# Don't use .env file in prod anymore
+# COPY .env.production .env
 
 RUN yarn build
 
