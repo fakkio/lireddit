@@ -139,7 +139,7 @@ export class UserResolver {
         password: hashedPassword,
         email: options.email,
       }).save();
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === "23505") {
         return {
           errors: [
